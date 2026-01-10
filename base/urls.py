@@ -10,4 +10,5 @@ urlpatterns = [
     path('staff/', include('staff.urls', namespace='staff')),
     path('trading/', include('trading.urls', namespace='trading')),
     path('strategy/', include('strategies.urls', namespace='strategy')),
+    path('portfolio/', include('portfolios.urls', namespace='portfolio')),
 ]

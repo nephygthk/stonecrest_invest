@@ -15,6 +15,12 @@ class Portfolio(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def total_value(self):
+        holdings_value = sum(
+            h.market_value() for h in self.holdings.all()
+        )
+        return self.cash_balance + holdings_value
+
     def __str__(self):
         return f"{self.user} Portfolio"
     
@@ -47,3 +53,21 @@ class Holding(models.Model):
 
     def unrealized_pnl(self):
         return (self.asset.price - self.average_price) * self.quantity
+
+
+class RebalanceLog(models.Model):
+    portfolio = models.ForeignKey(
+        'Portfolio',
+        on_delete=models.CASCADE,
+        related_name='rebalances'
+    )
+    strategy = models.ForeignKey(
+        'strategies.Strategy',
+        on_delete=models.CASCADE
+    )
+    executed_at = models.DateTimeField(auto_now_add=True)
+
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Rebalance {self.portfolio.id} @ {self.executed_at}"
