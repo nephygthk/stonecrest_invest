@@ -29,7 +29,7 @@ class EmailLoginView(LoginView):
 
         user = self.request.user
         if user.is_superuser or user.is_staff:
-            return reverse_lazy('account:customer_dashboard')
+            return reverse_lazy('staff:admin_dashboard')
 
         return reverse_lazy('account:customer_dashboard')
 

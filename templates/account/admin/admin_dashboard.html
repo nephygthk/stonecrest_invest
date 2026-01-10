@@ -1,0 +1,40 @@
+{% extends "../base/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h4>All Assets</h4>
+    <hr>
+    <table class="table table-striped table-bordered table-hover mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Symbol</th>
+                <th>Asset Type</th>
+                <th>Price</th>
+                <th>Volatility</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in all_assets %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ asset.name }}</td>
+                    <td>{{ asset.symbol }}</td>
+                    <td>{{ asset.asset_type }}</td>
+                    <td>${{ asset.price }}</td>
+                    <td>{{ asset.volatility }}%</td>
+                    <td>{{ asset.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No assets found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

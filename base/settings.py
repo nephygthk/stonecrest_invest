@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'account',
     'frontend',
     'portfolios',
+    'assets',
+    'staff',
 ]
 
 MIDDLEWARE = [
@@ -117,6 +119,7 @@ USE_TZ = True
 
 
 AUTH_USER_MODEL = 'account.User'
+LOGIN_URL = 'frontend:login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/

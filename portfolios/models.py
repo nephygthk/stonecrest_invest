@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from decimal import Decimal
 
+from assets.models import Asset
+
 User = settings.AUTH_USER_MODEL
 
 class Portfolio(models.Model):
@@ -15,3 +17,33 @@ class Portfolio(models.Model):
 
     def __str__(self):
         return f"{self.user} Portfolio"
+    
+
+class Holding(models.Model):
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name='holdings'
+    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    quantity = models.DecimalField(
+        max_digits=15,
+        decimal_places=4
+    )
+
+    average_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('portfolio', 'asset')
+
+    def market_value(self):
+        return self.quantity * self.asset.price
+
+    def unrealized_pnl(self):
+        return (self.asset.price - self.average_price) * self.quantity
