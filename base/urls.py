@@ -8,4 +8,5 @@ urlpatterns = [
     path('account/', include('account.urls', namespace='account')),
     path('assets/', include('assets.urls', namespace='assets')),
     path('staff/', include('staff.urls', namespace='staff')),
+    path('trading/', include('trading.urls', namespace='trading')),
 ]
