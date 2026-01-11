@@ -1,5 +1,6 @@
 from decimal import Decimal
 from trading.services import execute_buy
+from portfolios.models import Portfolio
 
 def execute_strategy(portfolio, strategy):
     allocations = strategy.allocations.all()
@@ -21,3 +22,13 @@ def execute_strategy(portfolio, strategy):
                 asset=asset,
                 quantity=quantity
             )
+
+
+def strategy_average_return(strategy):
+    portfolios = Portfolio.objects.filter(
+        portfoliostrategy__strategy=strategy
+    )
+
+    returns = [p.return_percentage() for p in portfolios]
+
+    return sum(returns) / len(returns) if returns else 0

@@ -1,0 +1,40 @@
+{% extends "../../base/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Top Performing Strategies</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Strategy</th>
+            <th>Risk</th>
+            <th>Assets</th>
+            <th>Target Return</th>
+            <th>Avg Return</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in leaderboard %}
+        <tr>
+            <td>{{ item.strategy.name }}</td>
+            <td>{{ item.strategy.get_risk_level_display }}</td>
+            <td>{{ item.asset_types }}</td>
+            <td>
+                {{ item.strategy.target_return_min }}–
+                {{ item.strategy.target_return_max }}%
+            </td>
+            <td>
+                {{ item.avg_return|floatformat:2 }}%
+            </td>
+            <td>
+                <a href="#">View</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

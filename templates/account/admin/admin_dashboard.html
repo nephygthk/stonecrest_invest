@@ -4,22 +4,41 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h4>All Assets</h4>
-    <hr>
-    <table class="table table-striped table-bordered table-hover mt-3">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Symbol</th>
-                <th>Asset Type</th>
-                <th>Price</th>
-                <th>Volatility</th>
-                <th>Created At</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for asset in all_assets %}
+    {% include "../../notification/messages.html" %}
+    <div class="row">
+        <div class="col-5 col-sm-8">
+            <h4>All Assets</h4>
+        </div>
+        <div class="col-7 col-sm-4">
+            <form method="post" action="{% url 'assets:manual_stimulation' %}" class="pinner-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-sm" data-spinner-text="Stimulating Asset prices"
+                    data-spinner-class="btn-secondary btn-sm">
+                    Manual Stimulation
+                </button>
+            </form>
+            <a href="" class="btn ntm-primary"></a>
+        </div>
+    </div>
+
+    <hr class="mt-0">
+    <!-- {% include "../../notification/messages.html" %} -->
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Symbol</th>
+                    <th>Asset Type</th>
+                    <th>Price</th>
+                    <th>Volatility</th>
+                    <th>Created At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in all_assets %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ asset.name }}</td>
@@ -28,13 +47,25 @@
                     <td>${{ asset.price }}</td>
                     <td>{{ asset.volatility }}%</td>
                     <td>{{ asset.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <form method="post" action="{% url 'staff:delete_asset' asset.id %}" class="pinner-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Are you sure you want to delete this asset?');"
+                                data-spinner-text="." data-spinner-class="btn-secondary btn-sm">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
                 </tr>
-            {% empty %}
+                {% empty %}
                 <tr>
                     <td colspan="7" class="text-center">No assets found.</td>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 </div>
 {% endblock %}

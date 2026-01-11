@@ -24,6 +24,22 @@ class Portfolio(models.Model):
     def __str__(self):
         return f"{self.user} Portfolio"
     
+    def initial_value(self):
+        first = self.snapshots.order_by('created_at').first()
+        return first.total_value if first else self.cash_balance
+
+    def current_value(self):
+        return self.total_value()
+
+    def total_return(self):
+        return self.current_value() - self.initial_value()
+
+    def return_percentage(self):
+        initial = self.initial_value()
+        if initial == 0:
+            return 0
+        return (self.total_return() / initial) * 100
+    
 
 class Holding(models.Model):
     portfolio = models.ForeignKey(
@@ -71,3 +87,43 @@ class RebalanceLog(models.Model):
 
     def __str__(self):
         return f"Rebalance {self.portfolio.id} @ {self.executed_at}"
+
+
+class DividendLog(models.Model):
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name='dividends'
+    )
+    asset = models.ForeignKey(
+        Asset,
+        on_delete=models.CASCADE
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+    paid_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.asset.symbol} dividend {self.amount}"
+
+
+class PortfolioSnapshot(models.Model):
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name='snapshots'
+    )
+    total_value = models.DecimalField(
+        max_digits=14,
+        decimal_places=2
+    )
+    cash_balance = models.DecimalField(
+        max_digits=14,
+        decimal_places=2
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.portfolio.id} @ {self.created_at}"

@@ -11,6 +11,7 @@
         <div class="card-body">
           <h4 class="text-center">Create Asset</h2>
             <hr>
+          {% include "../../notification/messages.html" %}
           <form method="post" class="pinner-form" novalidate>
             {% csrf_token %}
 
@@ -26,8 +27,8 @@
             </div>
             {% endfor %}
 
-            <button type="submit" class="btn btn-primary w-100 btn-sm fw-bold" data-spinner-text="Submitting..."
-              data-spinner-class="btn-secondary">
+            <button type="submit" class="btn btn-primary w-100 btn-sm fw-bold"    data-spinner-text="Creating Asset..."
+              data-spinner-class="btn-secondary w-100">
               Create
             </button>
           </form>

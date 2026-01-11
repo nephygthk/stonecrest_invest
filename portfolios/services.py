@@ -1,5 +1,5 @@
 from decimal import Decimal
-from portfolios.models import Holding, RebalanceLog
+from portfolios.models import Portfolio, PortfolioSnapshot, Holding, RebalanceLog, DividendLog
 
 def calculate_portfolio_value(portfolio):
     holdings_value = sum(
@@ -45,3 +45,49 @@ def rebalance_portfolio(portfolio):
         strategy=strategy,
         notes="Automated daily rebalance"
     )
+
+
+
+def pay_reit_dividends():
+    reit_holdings = Holding.objects.filter(
+        asset__asset_type='REIT',
+        quantity__gt=0
+    ).select_related('asset', 'portfolio')
+
+    for holding in reit_holdings:
+        asset = holding.asset
+
+        if not asset.annual_yield:
+            continue
+
+        if asset.dividend_frequency == 'MONTHLY':
+            period_yield = asset.annual_yield / Decimal('12')
+        else:
+            period_yield = asset.annual_yield / Decimal('4')
+
+        dividend_amount = (
+            holding.market_value() * period_yield / Decimal('100')
+        )
+
+        if dividend_amount <= 0:
+            continue
+
+        holding.portfolio.cash_balance += dividend_amount
+        holding.portfolio.save()
+
+        DividendLog.objects.create(
+            portfolio=holding.portfolio,
+            asset=asset,
+            amount=dividend_amount
+        )
+
+
+def take_daily_snapshots():
+    portfolios = Portfolio.objects.all()
+
+    for portfolio in portfolios:
+        PortfolioSnapshot.objects.create(
+            portfolio=portfolio,
+            total_value=portfolio.total_value(),
+            cash_balance=portfolio.cash_balance
+        )

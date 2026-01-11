@@ -1,0 +1,6 @@
+Price updates	Periodic webhook → /tasks/update-prices/
+Portfolio rebalancing	Periodic webhook → /tasks/rebalance/
+Dividend payout	Daily webhook → /tasks/dividends/
+Strategy execution	On-demand webhook → /tasks/execute-strategy/
+Copy trading sync	Periodic webhook → /tasks/copy-sync/
+Portfolio snapshots	Periodic webhook → /tasks/snapshot/

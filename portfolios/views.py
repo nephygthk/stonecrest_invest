@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from .services import rebalance_portfolio
+from .services import rebalance_portfolio, pay_reit_dividends
 from portfolios.models import Portfolio
 
 
@@ -12,4 +12,9 @@ def rebalance_all_portfolios(request):
         rebalance_portfolio(portfolio)
 
     return JsonResponse({"status": "ok"})
+
+
+def run_dividends(request):
+    pay_reit_dividends()
+    return JsonResponse({"status": "dividends paid"})
 
