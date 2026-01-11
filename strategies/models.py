@@ -84,6 +84,10 @@ class StrategyAllocation(models.Model):
             raise ValidationError(
                 "Total allocation percentage cannot exceed 100%"
             )
+        # elif total < 100:
+        #     raise ValidationError(
+        #         "Total allocation percentage is below 100% — strategy is under allocated"
+        #         )
 
 
 class PortfolioStrategy(models.Model):

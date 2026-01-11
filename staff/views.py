@@ -89,7 +89,7 @@ def admin_strategy_list_view(request):
 def admin_strategy_create_view(request):
     if request.method == 'POST':
         form = forms.StrategyForm(request.POST)
-        formset = forms.StrategyAllocationFormSet(request.POST)
+        formset = forms.StrategyAllocationCreateFormSet(request.POST)
 
         if form.is_valid() and formset.is_valid():
             strategy = form.save()
@@ -98,11 +98,15 @@ def admin_strategy_create_view(request):
             for allocation in allocations:
                 allocation.strategy = strategy
                 allocation.save()
-            messages.success(request, "Strategy Created successfully.")
+            messages.success(request, "Strategy is Created successfully.")
             return redirect('staff:admin_strategy_list')
+        else:
+            messages.error(request, "Please fix the errors below.")
+            print("Form errors:", form.errors)
+            print("Formset errors:", formset.errors)
     else:
         form = forms.StrategyForm()
-        formset = forms.StrategyAllocationFormSet()
+        formset = forms.StrategyAllocationCreateFormSet()
 
     context = {
         "current_url": request.resolver_match.url_name,
@@ -112,5 +116,56 @@ def admin_strategy_create_view(request):
     return render(
         request,
         'account/admin/strategy_form.html',
+        context
+    )
+
+@login_required
+@admin_staff_only
+def admin_strategy_edit_view(request, pk):
+    strategy = get_object_or_404(Strategy, pk=pk)
+
+    if request.method == 'POST':
+        time.sleep(3)
+        form = forms.StrategyForm(request.POST, instance=strategy)
+        formset = forms.StrategyAllocationEditFormSet(request.POST, instance=strategy)
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, "Strategy updated successfully.")
+            return redirect('staff:admin_strategy_list')
+        else:
+            messages.error(request, "Please fix the errors below.")
+            print("Form errors:", form.errors)
+            print("Formset errors:", formset.errors)
+    else:
+        form = forms.StrategyForm(instance=strategy)
+        formset = forms.StrategyAllocationEditFormSet(instance=strategy)
+
+    context = {
+        "form": form,
+        "formset": formset,
+        "strategy": strategy,
+        "current_url": request.resolver_match.url_name,
+    }
+    return render(request, 'account/admin/strategy_form.html', context)
+
+@login_required
+@admin_staff_only
+def admin_strategy_delete_view(request, pk):
+    strategy = get_object_or_404(Strategy, pk=pk)
+
+    if request.method == 'POST':
+        strategy.delete()
+        messages.success(request, "Strategy is deleted successfully.")
+        return redirect('staff:admin_strategy_list')
+
+    context = {
+        "current_url": request.resolver_match.url_name,
+        "strategy": strategy,
+    }
+    return render(
+        request,
+        'account/admin/strategy_confirm_delete.html',
         context
     )

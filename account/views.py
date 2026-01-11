@@ -6,8 +6,12 @@ from portfolios.models import Portfolio
 from portfolios.services import calculate_portfolio_value
 
 def customer_dashboard_view(request):
+    portfolio = Portfolio.objects.get(user=request.user)
+    holding_count = portfolio.holdings.all().count()
     return render(request, 'account/customer/dashboard.html', {
-        "current_url": request.resolver_match.url_name
+        "current_url": request.resolver_match.url_name,
+        'portfolio': portfolio,
+        'holding_count': holding_count
     })
 
 @login_required

@@ -11,4 +11,9 @@ urlpatterns = [
     path('trades/', views.admin_trade_list_view, name='admin_trade_list'),
     path('strategies/', views.admin_strategy_list_view,name='admin_strategy_list'),
     path('strategies/create/', views.admin_strategy_create_view,name='admin_strategy_create'),
+    path('strategies/<int:pk>/edit/', views.admin_strategy_edit_view,
+    name='admin_strategy_edit'),
+    path('strategies/<int:pk>/delete/', views.admin_strategy_delete_view,
+    name='admin_strategy_delete'),
+
 ]

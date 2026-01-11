@@ -56,10 +56,19 @@ class StrategyAllocationForm(forms.ModelForm):
             }),
         }
 
-StrategyAllocationFormSet = inlineformset_factory(
+StrategyAllocationCreateFormSet = inlineformset_factory(
     Strategy,
     StrategyAllocation,
     form=StrategyAllocationForm,
-    extra=3,          # ✅ only three inline rows
-    can_delete=False  # no JS, keep simple
+    extra=3,          # 3 empty rows for new allocations
+    can_delete=False  # nothing to delete yet
 )
+
+StrategyAllocationEditFormSet = inlineformset_factory(
+    Strategy,
+    StrategyAllocation,
+    form=StrategyAllocationForm,
+    extra=0,         # no blank rows
+    can_delete=True  # allow admin to delete existing allocations
+)
+
