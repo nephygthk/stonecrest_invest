@@ -85,6 +85,12 @@
                 Trade History
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_url == 'admin_strategy_list' %}active{% endif %}" href="{% url 'staff:admin_strategy_list' %}">
+                <i class="bi bi-diagram-3 me-2"></i>
+                Strategies
+            </a>
+        </li>
         {% endif %}
         <li class="nav-item mt-3">
             <a class="nav-link text-danger" href="{% url 'frontend:logout' %}">
