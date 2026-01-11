@@ -14,7 +14,7 @@ def customer_dashboard_view(request):
 def portfolio_view(request):
     portfolio = Portfolio.objects.get(user=request.user)
     total_value = calculate_portfolio_value(portfolio)
-
+    
     return render(request, "account/customer/portfolio.html", {
         "current_url": request.resolver_match.url_name,
         'portfolio': portfolio,

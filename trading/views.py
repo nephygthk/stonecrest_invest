@@ -12,7 +12,7 @@ def test_buy_view(request, asset_id):
     execute_buy(
         portfolio=portfolio,
         asset=asset,
-        quantity=2
+        quantity=10
     )
 
     return redirect('account:customer_dashboard')

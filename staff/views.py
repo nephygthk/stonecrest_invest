@@ -6,6 +6,7 @@ from django.contrib import messages
 from .decorators import admin_staff_only
 from assets.forms import AssetForm
 from assets.models import Asset
+from trading.models import Trade
 
 @login_required
 @admin_staff_only
@@ -46,3 +47,18 @@ def delete_asset_view(request, asset_id):
         asset.delete()
         messages.success(request, "Asset deleted successfully.")
         return redirect('staff:admin_dashboard')
+    
+
+@login_required
+@admin_staff_only
+def admin_trade_list_view(request):
+    trades = Trade.objects.select_related(
+        'portfolio',
+        'asset'
+    ).order_by('-executed_at')
+
+    context = {
+        "current_url": request.resolver_match.url_name,
+        "trades": trades,
+    }
+    return render(request, 'account/admin/trade_list.html', context)
