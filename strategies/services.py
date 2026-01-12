@@ -29,6 +29,11 @@ def strategy_average_return(strategy):
         portfoliostrategy__strategy=strategy
     )
 
-    returns = [p.return_percentage() for p in portfolios]
+    returns = [
+        p.return_percentage()
+        for p in portfolios
+        if p.initial_value() and p.initial_value() >= 1000
+    ]
 
     return sum(returns) / len(returns) if returns else 0
+

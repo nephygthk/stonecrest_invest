@@ -33,12 +33,20 @@ class Portfolio(models.Model):
 
     def total_return(self):
         return self.current_value() - self.initial_value()
-
+    
     def return_percentage(self):
         initial = self.initial_value()
-        if initial == 0:
+
+        if not initial or initial <= 0:
             return 0
-        return (self.total_return() / initial) * 100
+
+        return ((self.current_value() - initial) / initial) * 100
+
+    # def return_percentage(self):
+    #     initial = self.initial_value()
+    #     if initial == 0:
+    #         return 0
+    #     return (self.total_return() / initial) * 100
     
 
 class Holding(models.Model):
@@ -164,6 +172,9 @@ class PortfolioSnapshot(models.Model):
         decimal_places=2
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.portfolio.id} @ {self.created_at}"

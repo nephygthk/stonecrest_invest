@@ -42,7 +42,7 @@ INSTALLED_APPS = [
 
     'account',
     'frontend',
-    'portfolios',
+    'portfolios.apps.PortfoliosConfig',
     'assets',
     'staff',
     'trading',
