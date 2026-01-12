@@ -67,6 +67,46 @@ class Holding(models.Model):
     def market_value(self):
         return self.quantity * self.asset.price
 
+    def buy_value(self, amount):
+        """
+        Buy asset worth `amount` (value-based buy)
+        """
+        if amount <= 0:
+            return
+
+        price = self.asset.price
+        quantity_to_buy = amount / price
+
+        if self.portfolio.cash_balance < amount:
+            amount = self.portfolio.cash_balance
+            quantity_to_buy = amount / price
+
+        self.quantity += quantity_to_buy
+        self.portfolio.cash_balance -= amount
+
+        self.save()
+        self.portfolio.save()
+
+    def sell_value(self, amount):
+        """
+        Sell asset worth `amount` (value-based sell)
+        """
+        if amount <= 0:
+            return
+
+        price = self.asset.price
+        quantity_to_sell = amount / price
+
+        if quantity_to_sell > self.quantity:
+            quantity_to_sell = self.quantity
+            amount = quantity_to_sell * price
+
+        self.quantity -= quantity_to_sell
+        self.portfolio.cash_balance += amount
+
+        self.save()
+        self.portfolio.save()
+
     def unrealized_pnl(self):
         return (self.asset.price - self.average_price) * self.quantity
 

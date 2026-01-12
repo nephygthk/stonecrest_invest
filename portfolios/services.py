@@ -1,5 +1,6 @@
 from decimal import Decimal
 from portfolios.models import Portfolio, PortfolioSnapshot, Holding, RebalanceLog, DividendLog
+from strategies.models import PortfolioStrategy
 
 def calculate_portfolio_value(portfolio):
     holdings_value = sum(
@@ -13,14 +14,23 @@ def calculate_holdings_value(portfolio):
         h.market_value() for h in portfolio.holdings.all()
     )
 
-
 def rebalance_portfolio(portfolio):
-    strategy = portfolio.strategy
+    """
+    Rebalance a single portfolio based on its assigned strategy
+    """
+    try:
+        portfolio_strategy = PortfolioStrategy.objects.select_related(
+            'strategy'
+        ).get(portfolio=portfolio)
+    except PortfolioStrategy.DoesNotExist:
+        return  # portfolio has no strategy, skip
+
+    strategy = portfolio_strategy.strategy
     total_value = portfolio.total_value()
 
     for allocation in strategy.allocations.select_related('asset'):
         target_value = (
-            Decimal(allocation.percentage) / 100
+            Decimal(allocation.percentage) / Decimal('100')
         ) * total_value
 
         holding, _ = Holding.objects.get_or_create(
@@ -32,8 +42,9 @@ def rebalance_portfolio(portfolio):
         current_value = holding.market_value()
         difference = target_value - current_value
 
+        # Ignore very small drift
         if abs(difference) < Decimal('1.00'):
-            continue  # ignore tiny drift
+            continue
 
         if difference > 0:
             holding.buy_value(difference)
@@ -43,8 +54,9 @@ def rebalance_portfolio(portfolio):
     RebalanceLog.objects.create(
         portfolio=portfolio,
         strategy=strategy,
-        notes="Automated daily rebalance"
+        notes="Automated strategy rebalance"
     )
+
 
 
 
