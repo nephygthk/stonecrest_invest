@@ -79,8 +79,8 @@ class Holding(models.Model):
         """
         Buy asset worth `amount` (value-based buy)
         """
-        if amount <= 0:
-            return
+        if amount <= 0 or self.asset.price is None:
+            return Decimal('0')
 
         price = self.asset.price
         quantity_to_buy = amount / price
@@ -92,15 +92,18 @@ class Holding(models.Model):
         self.quantity += quantity_to_buy
         self.portfolio.cash_balance -= amount
 
-        self.save()
-        self.portfolio.save()
+        self.save(update_fields=['quantity'])
+        self.portfolio.save(update_fields=['cash_balance'])
+
+        return quantity_to_buy  # ✅ Return quantity
+
 
     def sell_value(self, amount):
         """
         Sell asset worth `amount` (value-based sell)
         """
-        if amount <= 0:
-            return
+        if amount <= 0 or self.asset.price is None:
+            return Decimal('0')
 
         price = self.asset.price
         quantity_to_sell = amount / price
@@ -112,8 +115,15 @@ class Holding(models.Model):
         self.quantity -= quantity_to_sell
         self.portfolio.cash_balance += amount
 
-        self.save()
-        self.portfolio.save()
+        if self.quantity == 0:
+            self.delete()
+        else:
+            self.save(update_fields=['quantity'])
+        
+        self.portfolio.save(update_fields=['cash_balance'])
+
+        return quantity_to_sell  # ✅ Return quantity
+
 
     def unrealized_pnl(self):
         return (self.asset.price - self.average_price) * self.quantity
@@ -178,3 +188,28 @@ class PortfolioSnapshot(models.Model):
 
     def __str__(self):
         return f"{self.portfolio.id} @ {self.created_at}"
+    
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('BUY', 'Buy'),
+        ('SELL', 'Sell'),
+        ('DIVIDEND', 'Dividend'),
+        ('REBALANCE', 'Rebalance'),
+        ('SWITCH', 'Strategy Switch'),
+    ]
+
+    portfolio = models.ForeignKey('Portfolio', on_delete=models.CASCADE, related_name='transactions')
+    asset = models.ForeignKey('assets.Asset', on_delete=models.SET_NULL, null=True, blank=True)
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    quantity = models.DecimalField(max_digits=20, decimal_places=6, default=Decimal('0'))
+    price = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0'))
+    total_value = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal('0'))
+    timestamp = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.transaction_type} {self.asset} {self.total_value}"

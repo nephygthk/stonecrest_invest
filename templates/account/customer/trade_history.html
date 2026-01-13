@@ -1,0 +1,40 @@
+{% extends "../base/base.html" %}
+{% load humanize %}
+
+{% block title %}Trade History{% endblock %}
+
+{% block content %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Asset</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Note</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trade in trades %}
+        <tr>
+            <td>{{ trade.timestamp }}</td>
+            <td>{{ trade.trade_type }}</td>
+            <td>
+                {% if trade.asset %}
+                {{ trade.asset.symbol }}
+                {% else %}
+                -
+                {% endif %}
+            </td>
+            <td>{{ trade.quantity|floatformat:2 }}</td>
+            <td>${{ trade.price|floatformat:2|intcomma }}</td>
+            <td>${{ trade.total_value|floatformat:2|intcomma }}</td>
+            <td>{{ trade.note }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

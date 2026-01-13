@@ -1,22 +1,34 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+
 from portfolios.models import Portfolio
 from .models import Strategy, PortfolioStrategy
-from .services import execute_strategy, strategy_average_return
+from .services import execute_strategy, strategy_average_return, switch_strategy
 
 @login_required
-def select_strategy_view(request, strategy_id):
+def activate_strategy_view(request, strategy_id):
     portfolio = Portfolio.objects.get(user=request.user)
     strategy = get_object_or_404(Strategy, id=strategy_id)
 
-    PortfolioStrategy.objects.update_or_create(
-        portfolio=portfolio,
-        defaults={'strategy': strategy}
-    )
+    if hasattr(portfolio, 'portfoliostrategy'):
+        # User already has a strategy → SWITCH
+        try:
+            switch_strategy(portfolio, strategy)
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('strategies:list')
+    else:
+        # First time → APPLY
+        PortfolioStrategy.objects.create(
+            portfolio=portfolio,
+            strategy=strategy
+        )
+        execute_strategy(portfolio, strategy)
 
-    execute_strategy(portfolio, strategy)
+    return redirect('account:portfolio')
 
-    return redirect('account:customer_dashboard')
 
 @login_required
 def strategy_list_view(request):

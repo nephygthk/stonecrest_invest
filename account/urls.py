@@ -15,4 +15,5 @@ urlpatterns = [
     path('reits-detail/', views.reit_detail_view, name='reit_detail'),
     path('copy-trading/', views.copy_trading_view, name='copy_trading'),
     path('wallet/', views.wallet_view, name='wallet'),
+    path('history/', views.trade_history_view, name='history'),
 ]

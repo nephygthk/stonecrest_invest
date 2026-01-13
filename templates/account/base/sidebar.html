@@ -64,6 +64,12 @@
                 Wallet
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_url == 'history' %}active{% endif %}" href="{% url 'account:history' %}">
+                <i class="bi bi-arrow-left-right me-2"></i>
+                History
+            </a>
+        </li>
         {% else %}
         <li class="nav-item">
             <a class="nav-link {% if current_url == 'admin_dashboard' %}active{% endif %}"

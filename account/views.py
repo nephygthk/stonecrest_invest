@@ -72,5 +72,12 @@ def wallet_view(request):
     })
 
 
+@login_required
+def trade_history_view(request):
+    portfolio = Portfolio.objects.get(user=request.user)
+    trades = portfolio.trades.all()
+    return render(request, 'account/customer/trade_history.html', {'trades': trades})
+
+
 
 

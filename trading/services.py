@@ -3,7 +3,7 @@ from django.db import transaction
 from portfolios.models import Holding
 from .models import Trade
 
-def execute_buy(portfolio, asset, quantity):
+def execute_buy(portfolio, asset, quantity, note="Strategy allocation"):
     price = asset.price
     cost = price * quantity
 
@@ -17,17 +17,11 @@ def execute_buy(portfolio, asset, quantity):
         holding, created = Holding.objects.get_or_create(
             portfolio=portfolio,
             asset=asset,
-            defaults={
-                'quantity': quantity,
-                'average_price': price
-            }
+            defaults={'quantity': quantity, 'average_price': price}
         )
 
         if not created:
-            total_cost = (
-                holding.quantity * holding.average_price
-            ) + cost
-
+            total_cost = (holding.quantity * holding.average_price) + cost
             new_quantity = holding.quantity + quantity
             holding.average_price = total_cost / new_quantity
             holding.quantity = new_quantity
@@ -38,15 +32,13 @@ def execute_buy(portfolio, asset, quantity):
             asset=asset,
             trade_type=Trade.BUY,
             quantity=quantity,
-            price=price
+            price=price,
+            note=note
         )
 
 
-def execute_sell(portfolio, asset, quantity):
-    holding = Holding.objects.get(
-        portfolio=portfolio,
-        asset=asset
-    )
+def execute_sell(portfolio, asset, quantity, note="Strategy unwind or rebalancing"):
+    holding = Holding.objects.get(portfolio=portfolio, asset=asset)
 
     if holding.quantity < quantity:
         raise ValueError("Not enough quantity to sell")
@@ -70,5 +62,6 @@ def execute_sell(portfolio, asset, quantity):
             asset=asset,
             trade_type=Trade.SELL,
             quantity=quantity,
-            price=price
+            price=price,
+            note=note
         )

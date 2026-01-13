@@ -1,6 +1,8 @@
 from decimal import Decimal
+
 from portfolios.models import Portfolio, PortfolioSnapshot, Holding, RebalanceLog, DividendLog
 from strategies.models import PortfolioStrategy
+from trading.models import Trade
 
 def calculate_portfolio_value(portfolio):
     holdings_value = sum(
@@ -47,17 +49,34 @@ def rebalance_portfolio(portfolio):
             continue
 
         if difference > 0:
-            holding.buy_value(difference)
+            amount_bought = holding.buy_value(difference)
+            if amount_bought > 0 and holding.asset.price is not None:
+                Trade.objects.create(
+                    portfolio=portfolio,
+                    asset=holding.asset,
+                    trade_type=Trade.REBALANCE,
+                    quantity=amount_bought,
+                    price=holding.asset.price,
+                    note=f"Rebalance BUY to target {allocation.percentage}%"
+                )
         else:
-            holding.sell_value(abs(difference))
+            amount_sold = holding.sell_value(abs(difference))
+            if amount_sold > 0 and holding.asset.price is not None:
+                Trade.objects.create(
+                    portfolio=portfolio,
+                    asset=holding.asset,
+                    trade_type=Trade.REBALANCE,
+                    quantity=amount_sold,
+                    price=holding.asset.price,
+                    note=f"Rebalance SELL to target {allocation.percentage}%"
+                )
 
+    # Optional: log a high-level rebalance
     RebalanceLog.objects.create(
         portfolio=portfolio,
         strategy=strategy,
         notes="Automated strategy rebalance"
     )
-
-
 
 
 def pay_reit_dividends():
@@ -72,25 +91,38 @@ def pay_reit_dividends():
         if not asset.annual_yield:
             continue
 
+        # Determine period yield
         if asset.dividend_frequency == 'MONTHLY':
             period_yield = asset.annual_yield / Decimal('12')
         else:
             period_yield = asset.annual_yield / Decimal('4')
 
-        dividend_amount = (
-            holding.market_value() * period_yield / Decimal('100')
-        )
+        # Calculate dividend
+        dividend_amount = holding.market_value() * period_yield / Decimal('100')
 
         if dividend_amount <= 0:
             continue
 
-        holding.portfolio.cash_balance += dividend_amount
-        holding.portfolio.save()
+        # Add to portfolio cash
+        portfolio = holding.portfolio
+        portfolio.cash_balance += dividend_amount
+        portfolio.save(update_fields=['cash_balance'])
 
+        # Log Dividend
         DividendLog.objects.create(
-            portfolio=holding.portfolio,
+            portfolio=portfolio,
             asset=asset,
             amount=dividend_amount
+        )
+
+        # ✅ Add Trade/Audit entry
+        Trade.objects.create(
+            portfolio=portfolio,
+            asset=asset,
+            trade_type=Trade.DIVIDEND,
+            quantity=0,
+            price=dividend_amount,
+            note=f"{asset.symbol} dividend payout"
         )
 
 
@@ -103,3 +135,20 @@ def take_daily_snapshots():
             total_value=portfolio.total_value(),
             cash_balance=portfolio.cash_balance
         )
+
+
+def unwind_portfolio(portfolio):
+    for holding in portfolio.holdings.select_related('asset'):
+        price = holding.asset.price
+
+        if price is None or price <= 0:
+            continue  # Skip selling invalid-priced assets
+
+        if holding.quantity > 0:
+            holding.sell_value(holding.market_value())
+
+    portfolio.holdings.filter(quantity=0).delete()
+
+
+
+
