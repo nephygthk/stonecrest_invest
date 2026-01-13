@@ -16,7 +16,9 @@
     <div class="col-md-3">
         <div class="card p-3 shadow-sm">
             <small class="text-muted">Today's P&L</small>
-            <h4 class="fw-bold text-success">+ $340.20</h4>
+            <h4 class="fw-bold {% if todays_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                ${{ todays_pnl|intcomma }}
+            </h4>
         </div>
     </div>
 
@@ -30,7 +32,9 @@
     <div class="col-md-3">
         <div class="card p-3 shadow-sm">
             <small class="text-muted">ROI</small>
-            <h4 class="fw-bold text-success">+18.4%</h4>
+            <h4 class="fw-bold {% if roi_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+                {% if roi_percent >= 0 %}+{% else %}-{% endif %} {{ roi_percent }}%
+            </h4>
         </div>
     </div>
 </div>

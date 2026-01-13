@@ -7,12 +7,61 @@ from portfolios.services import calculate_portfolio_value
 
 def customer_dashboard_view(request):
     portfolio = Portfolio.objects.get(user=request.user)
-    holding_count = portfolio.holdings.all().count()
+    holdings = portfolio.holdings.select_related('asset')
+    snapshots = portfolio.snapshots.order_by('created_at')
+    holding_count = portfolio.holdings.count()
+
+    # Aggregate by asset type
+    allocation = {}
+    for holding in holdings:
+        asset_type = holding.asset.asset_type
+        allocation.setdefault(asset_type, 0)
+        allocation[asset_type] += holding.market_value()
+
+    # ✅ Convert dict → lists
+    allocation_labels = list(allocation.keys())
+    allocation_values = [float(v) for v in allocation.values()]
+
+    # Recent trades
+    trades = portfolio.trades.all()[:10]
+
+    snapshot_labels = [s.created_at.strftime("%Y-%m-%d") for s in snapshots]
+    snapshot_values = [float(s.total_value) for s in snapshots]
+
+    if len(snapshots) >= 2:
+        today_value = snapshots.last().total_value
+        yesterday_value = snapshots.reverse()[1].total_value  # second last
+        print(today_value)
+        print(yesterday_value)
+        todays_pnl = today_value - yesterday_value
+        print(todays_pnl)
+        todays_pnl_percent = (todays_pnl / yesterday_value) * 100
+    else:
+        todays_pnl = 0
+        todays_pnl_percent = 0
+
+    # -------------------------------
+    # Calculate ROI
+    # ROI = (current value - starting cash) / starting cash * 100
+    # -------------------------------
+    starting_cash = snapshots.first().cash_balance if snapshots.exists() else portfolio.cash_balance
+    current_value = portfolio.total_value()
+    roi_percent = ((current_value - starting_cash) / starting_cash) * 100 if starting_cash > 0 else 0
+
     return render(request, 'account/customer/dashboard.html', {
         "current_url": request.resolver_match.url_name,
         'portfolio': portfolio,
-        'holding_count': holding_count
+        'holding_count': holding_count,
+        'allocation_labels': allocation_labels,
+        'allocation_values': allocation_values,
+        'trades': trades,
+        'snapshot_labels': snapshot_labels,
+        'snapshot_values': snapshot_values,
+        'todays_pnl': todays_pnl,
+        'todays_pnl_percent': round(todays_pnl_percent, 2),
+        'roi_percent': round(roi_percent, 2),
     })
+
 
 @login_required
 def portfolio_view(request):
@@ -76,7 +125,7 @@ def wallet_view(request):
 def trade_history_view(request):
     portfolio = Portfolio.objects.get(user=request.user)
     trades = portfolio.trades.all()
-    return render(request, 'account/customer/trade_history.html', {'trades': trades})
+    return render(request, 'account/customer/trade_history.html', {'trades': trades, "current_url": request.resolver_match.url_name,})
 
 
 
