@@ -106,11 +106,20 @@ def liquidate_strategy(portfolio):
     - Sell all holdings
     - Convert to cash
     - Remove PortfolioStrategy
+    - Record a portfolio snapshot
     """
     with transaction.atomic():
-        # 1️⃣ Sell everything
+        # 1️⃣ Sell all holdings
         unwind_portfolio(portfolio)
 
         # 2️⃣ Remove strategy link
         PortfolioStrategy.objects.filter(portfolio=portfolio).delete()
+
+        # 3️⃣ Record snapshot after liquidation
+        PortfolioSnapshot.objects.create(
+            portfolio=portfolio,
+            total_value=portfolio.total_value(),
+            cash_balance=portfolio.cash_balance
+        )
+
 

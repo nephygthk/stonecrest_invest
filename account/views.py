@@ -8,7 +8,8 @@ from assets.models import Asset
 from portfolios.models import Portfolio
 from portfolios.services import calculate_portfolio_value
 from strategies.models import PortfolioStrategy
-from copytrading.models import CopyRelationship
+from copytrading.models import CopyRelationship, CopyTradePnL
+from trading.models import Trade
 
 def customer_dashboard_view(request):
     portfolio = Portfolio.objects.get(user=request.user)
@@ -353,6 +354,8 @@ def reit_detail_view(request):
     })
 
 def copy_trading_view(request):
+    user_portfolio = request.user.portfolio
+
     portfolios = (
         Portfolio.objects
         .annotate(followers_count=Count('followers'))
@@ -364,13 +367,15 @@ def copy_trading_view(request):
     # Convert to list so we can sort in Python
     portfolios = list(portfolios)
 
-    
-
     # Sort by computed total_value
     portfolios.sort(
         key=lambda p: p.total_value(),
         reverse=True
     )
+
+    # Summary P&L for this follower
+    pnls = CopyTradePnL.objects.filter(follower=user_portfolio)
+    pnl_map = {p.leader_id: p for p in pnls}
 
     followed_portfolios = set()
     if request.user.is_authenticated:
@@ -384,8 +389,48 @@ def copy_trading_view(request):
         "current_url": "copy_trading",
         'portfolios': portfolios,
         'followed_portfolios': followed_portfolios,
-        'active_traders': active_traders
+        'active_traders': active_traders,
+        "pnl_map": pnl_map,
     })
+
+
+@login_required
+def leader_profile_view(request, leader_id):
+    leader = get_object_or_404(Portfolio, id=leader_id)
+    user_portfolio = request.user.portfolio
+
+    # Check if this user follows the leader
+    following = CopyRelationship.objects.filter(
+        follower=user_portfolio,
+        leader=leader,
+        is_active=True
+    ).exists()
+
+    # Fetch P&L breakdown
+    try:
+        pnl = CopyTradePnL.objects.get(follower=user_portfolio, leader=leader)
+    except CopyTradePnL.DoesNotExist:
+        pnl = None
+
+    # First, get all active leaders this user follows
+    active_copy_relationships = CopyRelationship.objects.filter(
+        follower=user_portfolio,
+        is_active=True
+    ).values_list('leader_id', flat=True)
+
+    # Then fetch trades from those leaders
+    mirrored_trades = Trade.objects.filter(
+        portfolio_id__in=active_copy_relationships
+    ).order_by('-timestamp')[:50]
+
+    context = {
+        "leader": leader,
+        "following": following,
+        "pnl": pnl,
+        "mirrored_trades": mirrored_trades,
+    }
+
+    return render(request, "account/customer/copy_leader_profile.html", context)
 
 
 def wallet_view(request):

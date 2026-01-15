@@ -142,17 +142,41 @@ def take_daily_snapshots():
         )
 
 
+# def unwind_portfolio(portfolio):
+#     for holding in portfolio.holdings.select_related('asset'):
+#         price = holding.asset.price
+
+#         if price is None or price <= 0:
+#             continue  # Skip selling invalid-priced assets
+
+#         if holding.quantity > 0:
+#             holding.sell_value(holding.market_value())
+    
+#     portfolio.holdings.filter(quantity=0).delete()
+
 def unwind_portfolio(portfolio):
+    """
+    Sell all holdings in the portfolio and register trades.
+    Used when stopping a strategy.
+    """
     for holding in portfolio.holdings.select_related('asset'):
         price = holding.asset.price
 
         if price is None or price <= 0:
-            continue  # Skip selling invalid-priced assets
+            continue  # Skip invalid-priced assets
 
         if holding.quantity > 0:
-            holding.sell_value(holding.market_value())
-    
+            # Sell the full market value using execute_sell so a Trade is created
+            execute_sell(
+                portfolio=portfolio,
+                asset=holding.asset,
+                quantity=holding.quantity,
+                note="Strategy liquidation"
+            )
+
+    # Clean up holdings with zero quantity (though execute_sell deletes automatically)
     portfolio.holdings.filter(quantity=0).delete()
+
 
 
 def liquidate_portfolio(portfolio):

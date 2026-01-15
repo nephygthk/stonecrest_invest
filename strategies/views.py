@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 
-from portfolios.models import Portfolio
+from portfolios.models import Portfolio, PortfolioSnapshot
 from .models import Strategy, PortfolioStrategy
 from .services import execute_strategy, strategy_average_return, switch_strategy, liquidate_strategy
 
@@ -80,7 +80,8 @@ def stop_strategy_view(request):
 
     messages.success(
         request,
-        "Strategy stopped. All assets sold and credited to cash balance."
+        "Strategy stopped. All assets sold, trades registered, and cash credited."
     )
     return redirect('account:portfolio')
+
 

@@ -2,6 +2,9 @@ from decimal import Decimal
 from trading.models import Trade
 from .models import CopyRelationship
 
+from decimal import Decimal
+from copytrading.models import CopyTradePnL
+from trading.models import Trade
 
 def mirror_trade(leader_portfolio, asset, trade_type, quantity):
     """
@@ -11,10 +14,7 @@ def mirror_trade(leader_portfolio, asset, trade_type, quantity):
 
     # Do NOT mirror trades made by followers
     if CopyRelationship.objects.filter(follower=leader_portfolio, is_active=True).exists():
-        print('stopped here')
         return
-
-    print('passed one')
 
     followers = CopyRelationship.objects.filter(
         leader=leader_portfolio,
@@ -28,15 +28,12 @@ def mirror_trade(leader_portfolio, asset, trade_type, quantity):
 
     for relation in followers:
         follower = relation.follower
-        print('passed two')
         # Safety checks
         if follower.id == leader_portfolio.id:
-            print('passed three')
             continue
 
         follower_value = follower.total_value()
         if follower_value <= 0:
-            print('passed four')
             continue
 
         # Scale trade proportionally
@@ -44,23 +41,34 @@ def mirror_trade(leader_portfolio, asset, trade_type, quantity):
         follower_quantity = quantity * ratio
 
         if follower_quantity <= Decimal('0.0001'):
-            print('passed 5')
             continue
+
+        pnl_obj, _ = CopyTradePnL.objects.get_or_create(
+            follower=follower,
+            leader=leader_portfolio
+        )
 
         try:
             if trade_type == Trade.BUY:
                 execute_buy(
                     portfolio=follower,
                     asset=asset,
-                    quantity=follower_quantity
+                    quantity=follower_quantity,
+                    note="Copy trade buy"
                 )
+                pnl_obj.total_invested += asset.price * follower_quantity
+
             elif trade_type == Trade.SELL:
                 execute_sell(
                     portfolio=follower,
                     asset=asset,
-                    quantity=follower_quantity
+                    quantity=follower_quantity,
+                    note="Copy trade sell"
                 )
+                pnl_obj.total_realized_pnl += asset.price * follower_quantity
+
+            pnl_obj.save()
+
         except Exception:
             # Fail silently so leader trade is never blocked
-            print('got here and failed here')
             continue
