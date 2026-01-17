@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'staff',
     'trading',
     'strategies',
-    'copytrading',
+    'copytrading.apps.CopytradingConfig',
 ]
 
 MIDDLEWARE = [

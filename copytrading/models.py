@@ -2,19 +2,16 @@ from django.db import models
 from portfolios.models import Portfolio
 from decimal import Decimal
 
-
 class CopyRelationship(models.Model):
     follower = models.ForeignKey(
-        Portfolio,
-        on_delete=models.CASCADE,
-        related_name='following'
+        Portfolio, on_delete=models.CASCADE, related_name='following'
     )
     leader = models.ForeignKey(
-        Portfolio,
-        on_delete=models.CASCADE,
-        related_name='followers'
+        Portfolio, on_delete=models.CASCADE, related_name='followers'
     )
-
+    allocated_cash = models.DecimalField(
+        max_digits=18, decimal_places=2, default=Decimal("0.00")
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -23,6 +20,7 @@ class CopyRelationship(models.Model):
 
     def __str__(self):
         return f"{self.follower} copies {self.leader}"
+
 
 
 class CopyTradePnL(models.Model):

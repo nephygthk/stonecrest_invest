@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.db import transaction
 from portfolios.models import Holding
 from .models import Trade
-from copytrading.services import mirror_trade
+# from copytrading.services import mirror_trade
 from strategies.models import StrategyHolding
 
 def execute_buy(
@@ -68,12 +68,12 @@ def execute_buy(
             note=note,
         )
 
-    mirror_trade(
-        leader_portfolio=portfolio,
-        asset=asset,
-        trade_type=Trade.BUY,
-        quantity=quantity
-    )
+    # mirror_trade(
+    #     leader_portfolio=portfolio,
+    #     asset=asset,
+    #     trade_type=Trade.BUY,
+    #     quantity=quantity
+    # )
 
 # def execute_buy(
 #     portfolio,
@@ -199,7 +199,7 @@ def execute_sell(
         )
 
     # Mirror to followers if needed
-    mirror_trade(leader_portfolio=portfolio, asset=asset, trade_type=Trade.SELL, quantity=quantity)
+    # mirror_trade(leader_portfolio=portfolio, asset=asset, trade_type=Trade.SELL, quantity=quantity)
 
 
 # def execute_sell(portfolio, asset, quantity, strategy_allocation=None, note=""):
